@@ -9,7 +9,7 @@ from collections import namedtuple
 import numpy as np
 from tabulate import tabulate
 
-VERBOSE = True
+VERBOSE = False
 
 class ViterbiDecoding:
     """
