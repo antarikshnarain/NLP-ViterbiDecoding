@@ -7,8 +7,11 @@ the possible POS tag sequence for the strings in test.txt
 """
 from collections import namedtuple
 import numpy as np
+from tabulate import tabulate
 
-class ModelParameters:
+VERBOSE = True
+
+class ViterbiDecoding:
     """
     Class to computer model parameters
         - pi -> initial probabilites
@@ -26,10 +29,12 @@ class ModelParameters:
         self.poss = list(self.poss)
         self._process_data()
 
-        print(self.poss)
-        print(self.pi)
-        print(self.A)
-        print(self.B)    
+        # print(self.poss)
+        # print(self.pi)
+        # print(self.A)
+        # print(self.B)
+        if VERBOSE:
+            self.print_parameters()    
 
     def _process_file(self, filename):
         file = open(filename, mode='r', encoding='utf-8')
@@ -67,24 +72,51 @@ class ModelParameters:
         # TODO: normalize dictionary values
         self.pi /= np.sum(self.pi, axis = 0)
         self.A /= np.sum(self.A, axis=1, keepdims=True)
-        print(self.B)
         self.B /= np.sum(self.B, axis=0, keepdims=True)
 
+    def print_parameters(self, tokens_idx = None):
+        pos_tags = self.poss
+        if tokens_idx == None:
+            tokens_idx = np.arange(len(self.tokens))
+        tokens = [self.tokens[i] for i in tokens_idx]
+        print("-----Initial Parameters-----")
+        print(tabulate([list(self.pi)], headers=pos_tags, tablefmt="grid"))
+        
+        print("\n-----Transition Probabilities-----")
+        A = [[label] + lst for label,lst in zip(pos_tags, self.A.tolist())]
+        print(tabulate(A, headers=pos_tags, tablefmt="grid"))
 
-    def ViterbiDecoding(self, idx):
+        print("\n-----Emission Probabilities-----")
+        B = [[label] + lst for label,lst in zip(tokens, self.B[tokens_idx].tolist())]
+        print(tabulate(B, headers=pos_tags, tablefmt="grid"))
+
+
+    def ViterbiDecoding(self, idx, words):
         # TODO: create 2-D matrix for Dynamic Programming
+        print("\n#####Viterbi Decoding#####")
         dp_mat = np.zeros((len(self.poss), len(idx)))
         seq_mat = []
         dp_mat[:,0] = self.pi * self.B[idx[0],:]
-        print(self.poss)
-        #print(dp_mat)
+        if VERBOSE:
+            print("For word: ", words[0])
+            print(tabulate([dp_mat[:,0].tolist()], headers=self.poss, tablefmt="grid"))
         for i in range(1,len(idx)):
             lst = np.multiply(self.A, dp_mat[:,i-1].reshape((dp_mat[:,i-1].size, 1)))
             lst2 = self.B[idx[i],:] * lst
+            if VERBOSE:
+                A = [[label] + lst for label,lst in zip(self.poss, lst2.tolist())]
+                print("For word: ", words[i])
+                print(tabulate(A, headers=self.poss, tablefmt="grid"))
             dp_mat[:,i] = np.max(lst2, axis=0)
             seq_mat.append(np.argmax(lst2, axis=0))
 
-        print(dp_mat)
+        # TODO: Print Forward Matrix
+
+        #print(dp_mat)
+        alpha_mat = [[label] + lst for label,lst in zip(self.poss, dp_mat.tolist())]
+        print("\n-----Alpha Propagation-----")
+        print(tabulate(alpha_mat, headers=words, tablefmt="grid"))
+        
         # TODO: Print sequence
         l = np.argmax(dp_mat[:,-1])
         sequence = []
@@ -93,8 +125,7 @@ class ModelParameters:
             l = seq[l]
         sequence.append(self.poss[l])
         sequence.reverse()
-        print(sequence)
-        #print([self.poss[p] for p in l])
+        print("Most Probable Sequence: ", sequence)
 
     def test(self, input_file_name):
         file = open(input_file_name, mode='r', encoding='utf-8')
@@ -102,13 +133,14 @@ class ModelParameters:
         for line in lines:
             line = line.replace('\n','')
             idx = [self.tokens.index(word) for word in line.split(' ')]
-            print(self.B[idx,:])
+            # print(self.B[idx,:])
+            print("Processing...")
             print(line)
-            self.ViterbiDecoding(idx)
+            self.print_parameters(tokens_idx=idx)
+            self.ViterbiDecoding(idx, line.split(' '))
         file.close()
 
 
 if __name__ == "__main__":
-    mp = ModelParameters("train.txt")
+    mp = ViterbiDecoding("train.txt")
     mp.test("test.txt")
-    
