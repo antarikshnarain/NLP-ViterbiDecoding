@@ -125,6 +125,7 @@ class ViterbiDecoding:
             l = seq[l]
         sequence.append(self.poss[l])
         sequence.reverse()
+        print("For Words: ", words)
         print("Most Probable Sequence: ", sequence)
 
     def test(self, input_file_name):
@@ -142,5 +143,11 @@ class ViterbiDecoding:
 
 
 if __name__ == "__main__":
-    mp = ViterbiDecoding("train.txt")
-    mp.test("test.txt")
+    mp = ViterbiDecoding("data/train1.txt")
+    mp.test("data/test1.txt")
+
+    # mp = ViterbiDecoding("data/train3a.txt")
+    # mp.test("data/test3.txt")
+
+    # mp = ViterbiDecoding("data/train3b.txt")
+    # mp.test("data/test3.txt")
