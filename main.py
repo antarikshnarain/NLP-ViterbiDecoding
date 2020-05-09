@@ -74,6 +74,7 @@ class ModelParameters:
     def ViterbiDecoding(self, idx):
         # TODO: create 2-D matrix for Dynamic Programming
         dp_mat = np.zeros((len(self.poss), len(idx)))
+        seq_mat = []
         dp_mat[:,0] = self.pi * self.B[idx[0],:]
         print(self.poss)
         #print(dp_mat)
@@ -81,12 +82,19 @@ class ModelParameters:
             lst = np.multiply(self.A, dp_mat[:,i-1].reshape((dp_mat[:,i-1].size, 1)))
             lst2 = self.B[idx[i],:] * lst
             dp_mat[:,i] = np.max(lst2, axis=0)
-        #    print(dp_mat)
+            seq_mat.append(np.argmax(lst2, axis=0))
 
         print(dp_mat)
         # TODO: Print sequence
-        l = np.argmax(dp_mat, axis=0)
-        print([self.poss[p] for p in l])
+        l = np.argmax(dp_mat[:,-1])
+        sequence = []
+        for seq in reversed(seq_mat):
+            sequence.append(self.poss[l])
+            l = seq[l]
+        sequence.append(self.poss[l])
+        sequence.reverse()
+        print(sequence)
+        #print([self.poss[p] for p in l])
 
     def test(self, input_file_name):
         file = open(input_file_name, mode='r', encoding='utf-8')
